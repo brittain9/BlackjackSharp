@@ -23,6 +23,12 @@ namespace Blackjack
     {
         private deck_t deck;
 
+
+        public deck_t getDeck()
+        {
+            return deck;
+        }
+
         public
             Deck(int numDecks, bool shuffled)
         {
@@ -99,16 +105,8 @@ namespace Blackjack
             return returnCard;
         }
 
-        // Making static so I can use with my other deck_t types not in
-        public static void PrintCards(deck_t deck1)
-        {
-            foreach (var card in deck1)
-            {
-                card.PrintCard();
-                Console.Write(' ');
-            }
-            Console.Write('\n');
-        }
+        // Making static so I can use with my other deck_t
+
     }
 
     class Card
