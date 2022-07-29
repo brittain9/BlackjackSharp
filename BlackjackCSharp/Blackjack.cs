@@ -32,92 +32,117 @@ namespace Blackjack
     static class Blackjack
     {
         // Game stats
-        static public int m_PlayerWins = 0;
-        static public int m_DealerWins = 0;
-        static public int m_Pushes = 0;
-        static public int m_PlayerBlackjacks = 0;
-        static public int m_DealerBlackjacks = 0;
+        static private int _m_PlayerWins;
+        static public int m_PlayerWins
+        {
+            get { return _m_PlayerWins;}
+            set { _m_PlayerWins = value; }
+        }
+        static private int _m_DealerWins;
+        static public int m_DealerWins
+        {
+            get { return _m_DealerWins; }
+            set { _m_DealerWins = value; }
+        }
+        static private int _m_Pushes;
+        static public int m_Pushes
+        {
+            get { return _m_Pushes; }
+            set { _m_Pushes = value; }
+        }
+        static private int _m_PlayerBlackjacks;
+        static public int m_PlayerBlackjacks
+        {
+            get { return _m_PlayerBlackjacks; }
+            set { _m_PlayerBlackjacks = value; }
+        }
+        static private int _m_DealerBlackjacks;
+        static public int m_DealerBlackjacks
+        {
+            get { return _m_DealerBlackjacks; }
+            set { _m_DealerBlackjacks = value; }
+        }
 
         static public bool betsOn = true; // remove later
         static public bool END_GAME = false;
 
-        public static int PlayBlackjack(ref Player player,ref Dealer dealer,ref Deck deck)
+        public static int PlayBlackjack(Player player, Dealer dealer, Deck deck)
         {
             // Clear everything from last round
-            player.getHand().Clear();
-            player.getSplit1().Clear();
-            player.getSplit2().Clear();
-            dealer.getHand().Clear();
-            player.setSplit1Bet(0);
-            player.setSplit2Bet(0);
-            player.setInsureBet(0);
+            player.m_Hand.Clear();
+            player.m_Split1.Clear();
+            player.m_Split2.Clear();
+            dealer.m_Hand.Clear();
+            player.m_Split1Bet = 0;
+            player.m_Split2Bet = 0;
+            player.m_InsuranceBet = 0;
 
             if (betsOn)
             {
-                Console.WriteLine($"\n\n========================================================\n\nTotal Bank: ${player.getBankRoll()}");
-                Bet(ref player);
+                Console.WriteLine($"\n\n========================================================\n\nTotal Bank: ${player.m_BankRoll}");
+                Bet(player);
             }
 
             if (END_GAME)
                 return (int)Outcomes.SPLIT_DECIDED;
 
-            player.getHand().Add(deck.DrawCard());
-            dealer.getHand().Add(deck.DrawCard());
-            player.getHand().Add(deck.DrawCard());
-            dealer.getHand().Add(deck.DrawCard());
+            player.m_Hand.Add(deck.DrawCard());
+            dealer.m_Hand.Add(deck.DrawCard());
+            player.m_Hand.Add(deck.DrawCard());
+            dealer.m_Hand.Add(deck.DrawCard());
 
             Console.Write("\n\t");
             dealer.PrintDealerUpCard();
             Console.Write("\n\t");
-            PrintCards(player.getHand());
+            PrintCards(player.m_Hand);
 
             int dealerPeekBJ = 0;
             if (betsOn && dealer.DealerUpCardValue() == 1)
-                dealerPeekBJ = InsuranceBet(ref player, dealer);
+                dealerPeekBJ = InsuranceBet(player, dealer);
 
             if(dealerPeekBJ == 1)
                 return (int)Outcomes.DEALER_Blackjack;
 
             if (betsOn)
-                Console.WriteLine($"\n\tBet: {player.getBet()}");
+                Console.WriteLine($"\n\tBet: {player.m_Bet}");
 
             int winner = HandleBlackjacks(player, dealer);
             if (winner != 0)
                 return winner;
 
-            GetPlayerInput(ref player, dealer, ref deck);
+            GetPlayerInput(player, dealer, deck);
 
-            if (player.getSplit1().Any())
+            if (player.m_Split1.Any())
                 return (int)Outcomes.SPLIT_DECIDED;
 
-            if (CheckBust(player.getHand()))
+            if (CheckBust(player.m_Hand))
             {
                 Console.WriteLine("Player busted");
                 return (int)Outcomes.DEALER_WINS;
             }
 
-            dealer.AI(ref deck);
-            if (CheckBust(dealer.getHand()))
+            dealer.AI(deck);
+            if (CheckBust(dealer.m_Hand))
             {
                 Console.WriteLine("Dealer busted");
                 return (int)Outcomes.PLAYER_WINS;
             }
 
             // Determine who won
-            if (GetHandValue(player.getHand()) < GetHandValue(dealer.getHand()))
+            if (GetHandValue(player.m_Hand) < GetHandValue(dealer.m_Hand))
                 return (int)Outcomes.DEALER_WINS;
-            if (GetHandValue(player.getHand()) > GetHandValue(dealer.getHand()))
+            if (GetHandValue(player.m_Hand) > GetHandValue(dealer.m_Hand))
                 return (int)Outcomes.PLAYER_WINS;
             return (int)Outcomes.PUSH;
         }
 
-        private static void Bet(ref Player player)
+        private static void Bet(Player player)
         {
             while (true)
             {
                 int bet = getIntPut("Enter bet or 0 for hotkeys: ");
 
-                if (bet > player.getBankRoll())
+                if (bet > player.m_BankRoll)
                 {
                     Console.WriteLine("You cannot afford that bet.");
                     continue;
@@ -136,47 +161,47 @@ namespace Blackjack
                             "Press 1 for last bet size\nPress 2 for half last bet size\nPress 9 to end and show results\n");
                         continue;
                     case 1:
-                        if (player.getLastBet() == 0)
+                        if (player.m_LastBet == 0)
                         {
                             Console.WriteLine("You don't have a last bet.");
                             continue;
                         }
 
-                        if (player.getLastBet() > player.getBankRoll())
+                        if (player.m_LastBet > player.m_BankRoll)
                         {
                             Console.WriteLine("\nYou cannot afford to bet your last bet.");
                             continue;
                         }
-
-                        player.setBet(player.getLastBet());
+                        
+                        player.m_Bet = player.m_LastBet;
                         return;
                     case 2:
-                        if (player.getLastBet() == 0)
+                        if (player.m_LastBet == 0)
                         {
                             Console.WriteLine("You don't have a last bet.");
                             continue;
                         }
 
-                        if ((int)(player.getLastBet() / 2.0f) > player.getBankRoll())
+                        if ((int)(player.m_LastBet / 2.0f) > player.m_BankRoll)
                         {
                             Console.WriteLine("\nYou cannot afford to bet your last bet.");
                             continue;
                         }
 
-                        player.setBet((int)(player.getLastBet() / 2.0f));
+                        player.m_Bet = (int)(player.m_LastBet / 2.0f);
                         return;
                     case 9:
                         END_GAME = true;
                         return;
                     default:
-                        player.setBet(bet);
-                        player.setLastBet(player.getBet());
+                        player.m_Bet = bet;
+                        player.m_LastBet = player.m_Bet;
                         return;
                 }
             }
         }
 
-        private static int InsuranceBet(ref Player player, Dealer dealer)
+        private static int InsuranceBet(Player player, Dealer dealer)
         {
             while (true)
             {
@@ -187,34 +212,34 @@ namespace Blackjack
                         Console.WriteLine("No insurance bet placed.");
                         break;
                     default:
-                        if (player.getLastBet() < player.getBet() + player.getInsureBet())
+                        if (player.m_LastBet < player.m_Bet + player.m_InsuranceBet)
                         {
                             Console.WriteLine("You cannot afford this insurance bet.");
                             continue;
                         }
 
-                        if (bet > (int)(player.getBet() / 2))
+                        if (bet > (int)(player.m_Bet / 2))
                         {
                             Console.WriteLine("\nThe maximum value for an insurance bet is half your original stake.\n");
                             continue;
                         }
-                        player.setInsureBet(bet);
+                        player.m_InsuranceBet = bet;
                         break;
                 }
 
                 Console.WriteLine("Dealer is peeking other card to check for Blackjack");
-                if (Blackjack.checkBlackjack(dealer.getHand()))
+                if (Blackjack.checkBlackjack(dealer.m_Hand))
                 {
                     Console.Write("Dealer has blackjack.");
                     if (bet > 0)
                     {
                         Console.WriteLine($"You made 2:1 on your insurance bet paying out {bet * 2}!");
-                        player.setBankRoll(player.getBankRoll() + bet * 2);
+                        player.m_BankRoll += bet * 2;
                     }
                     return (int)Outcomes.DEALER_Blackjack;
                 }
                 Console.WriteLine("No Blackjack.");
-                player.setBankRoll(player.getBankRoll() - bet);
+                player.m_BankRoll -= bet;
                 return 0;
             }
         }
@@ -222,29 +247,29 @@ namespace Blackjack
         private static int HandleBlackjacks(Player player, Dealer dealer)
         {
             // Returns 0 if no BJs
-            if (checkBlackjack(player.getHand()))
+            if (checkBlackjack(player.m_Hand))
             {
                 Console.WriteLine("Player Blackjack!");
-                if (checkBlackjack(dealer.getHand()))
+                if (checkBlackjack(dealer.m_Hand))
                 {
                     Console.WriteLine("Dealer also had Blackjack!");
                     Console.Write("\tBlackjack: ");
-                    PrintCards(dealer.getHand());
+                    PrintCards(dealer.m_Hand);
                     return (int)Outcomes.PUSH;
                 }
                 return (int)Outcomes.PLAYER_Blackjack;
             }
-            if (checkBlackjack(dealer.getHand()))
+            if (checkBlackjack(dealer.m_Hand))
             {
                 Console.WriteLine("Dealer Blackjack!");
                 Console.Write("\tBlackjack: ");
-                PrintCards(dealer.getHand());
+                PrintCards(dealer.m_Hand);
                 return (int)Outcomes.DEALER_Blackjack;
             }
             return 0;
         }
 
-        private static void GetPlayerInput(ref Player player, Dealer dealer, ref Deck deck,
+        private static void GetPlayerInput(Player player, Dealer dealer, Deck deck,
             bool splitAces = false, int splitInfo = 0)
         {
             Console.WriteLine("Players Turn.    ");
@@ -252,9 +277,9 @@ namespace Blackjack
             while (true)
             {
                 Console.Write("Enter 1 to stand    Enter 2 to hit    ");
-                if (betsOn && player.getHand().Count == 2)
+                if (betsOn && player.m_Hand.Count == 2)
                     Console.Write("Enter 3 to double down    ");
-                if (isSplittable(player.getHand(), true))
+                if (isSplittable(player.m_Hand, true))
                     Console.Write("Enter 4 to split    ");
 
                 choice = getIntPut("Decision: ");
@@ -264,85 +289,85 @@ namespace Blackjack
                         Console.WriteLine("\tPlayer Stands.\n");
                         return;
                     case (int)Choices.HIT:
-                        if (splitAces && player.getHand().Count > 2)
+                        if (splitAces && player.m_Hand.Count > 2)
                         {
                             Console.WriteLine("\nYou can only hit ace splits once.\n");
                             continue;
                         }
-                        player.getHand().Add(deck.DrawCard());
+                        player.m_Hand.Add(deck.DrawCard());
                         Console.Write("\tPlayer hand: ");
-                        PrintCards(player.getHand());
-                        if (CheckBust(player.getHand()))
+                        PrintCards(player.m_Hand);
+                        if (CheckBust(player.m_Hand))
                             return;
-                        if (GetHandValue(player.getHand()) == 21) 
+                        if (GetHandValue(player.m_Hand) == 21) 
                             return;
                         continue;
                     case (int)Choices.DOUBLE_DOWN:
-                        if (player.getHand().Count > 2)
+                        if (player.m_Hand.Count > 2)
                         {
                             Console.WriteLine("\tYou didn't even have the option to double down.\n");
                             continue;
                         }
-                        if (player.getBankRoll() < player.getBet() * 2 + player.getSplit1Bet() + player.getSplit2Bet())
+                        if (player.m_BankRoll < player.m_Bet * 2 + player.m_Split1Bet + player.m_Split2Bet)
                         {
                             Console.WriteLine("\tYou're too poor to double down.\n");
                             continue;
                         }
                         if (splitInfo == (int)SplitCases.SplitHand)
-                            player.setSplit1Bet(player.getSplit1Bet() * 2);
+                            player.m_Split1Bet *= 2;
                         else if (splitInfo >= (int)SplitCases.Split2Hand)
-                            player.setSplit2Bet(player.getSplit2Bet() * 2); // TODO TEST
+                            player.m_Split2Bet *= 2; // TODO TEST
                         else
-                            player.setBet(player.getBet()*2);
+                            player.m_Bet *= 2;
 
-                        player.getHand().Add(deck.DrawCard());
+                        player.m_Hand.Add(deck.DrawCard());
                         Console.Write("\tPlayer hand: ");
-                        PrintCards(player.getHand());
+                        PrintCards(player.m_Hand);
                         return;
                     case (int)Choices.SPLIT:
-                        if (!isSplittable(player.getHand(), true))
+                        if (!isSplittable(player.m_Hand, true))
                         {
                             Console.WriteLine("\nYou weren't even given the option to split this hand.");
                             continue;
                         }
-                        if (player.getBankRoll() < player.getBet() + player.getSplit1Bet() + player.getSplit2Bet())
+                        if (player.m_BankRoll < player.m_Bet + player.m_Split1Bet + player.m_Split2Bet)
                         {
                             Console.WriteLine("\tYou're too poor to double down.\n");
                             continue;
                         }
 
-                        if (player.getHand().ElementAt(0).RankValue() == 1)
+                        if (player.m_Hand.ElementAt(0).RankValue() == 1)
                             splitAces = true;
 
                         switch (splitInfo)
                         {
                             case (int)SplitCases.NoSplit:
-                                player.getSplit1().Add(player.getHand().ElementAt(1));
-                                player.getSplit1().Add(deck.DrawCard());
-                                player.setSplit1Bet(player.getBet());
+                                player.m_Split1.Add(player.m_Hand.ElementAt(1));
+                                player.m_Split1.Add(deck.DrawCard());
+                                player.m_Split1Bet = player.m_Bet;
 
-                                player.getHand().RemoveAt(1);
-                                player.getHand().Add(deck.DrawCard());
+                                player.m_Hand.RemoveAt(1);
+                                player.m_Hand.Add(deck.DrawCard());
                                 splitInfo = (int)SplitCases.SplitHand;
                                 break;
                             case (int)SplitCases.SplitHand:
                                 break;
                             case (int)SplitCases.Split2Hand:
-                                player.getSplit2().Add(player.getHand().ElementAt(1));
-                                player.getSplit2().Add(deck.DrawCard());
-                                player.setSplit2Bet(player.getBet());
+                                player.m_Split2.Add(player.m_Hand.ElementAt(1));
+                                player.m_Split2.Add(deck.DrawCard());
+                                player.m_Split2Bet = player.m_Bet;
 
-                                player.getHand().RemoveAt(1);
-                                player.getHand().Add(deck.DrawCard());
+                                player.m_Hand.RemoveAt(1);
+                                player.m_Hand.Add(deck.DrawCard());
                                 splitInfo = (int)SplitCases.SplitMax;
                                 break;
                             case (int)SplitCases.Split2Split1:
-                                player.getSplit2().Add(player.getSplit1().ElementAt(1));
-                                player.getSplit2().Add(deck.DrawCard());
-                                player.setSplit2Bet(player.getBet());
+                                player.m_Split2.Add(player.m_Split1.ElementAt(1));
+                                player.m_Split2.Add(deck.DrawCard());
+                                player.m_Split2Bet = player.m_Bet;
 
-                                player.getSplit1().RemoveAt(1);
-                                player.getSplit1().Add(deck.DrawCard());
+                                player.m_Split1.RemoveAt(1);
+                                player.m_Split1.Add(deck.DrawCard());
                                 splitInfo = (int)SplitCases.SplitMax;
                                 break;
                             case (int)SplitCases.SplitMax:
@@ -353,41 +378,41 @@ namespace Blackjack
                         if (splitInfo == (int)SplitCases.SplitHand || splitInfo == (int)SplitCases.Split2Hand || splitInfo == (int)SplitCases.SplitMax)
                         {
                             Console.Write("\tFIRST hand: ");
-                            PrintCards(player.getHand());
+                            PrintCards(player.m_Hand);
                             Console.Write("\tSecond hand: ");
-                            PrintCards(player.getSplit1());
-                            if (player.getSplit2().Any())
+                            PrintCards(player.m_Split1);
+                            if (player.m_Split2.Any())
                             {
                                 Console.Write("\tThird hand: ");
-                                PrintCards(player.getSplit2());
+                                PrintCards(player.m_Split2);
                             }
-                            GetPlayerInput(ref player, dealer, ref deck, splitAces, (int)SplitCases.Split2Hand);
+                            GetPlayerInput(player, dealer, deck, splitAces, (int)SplitCases.Split2Hand);
                         }
 
                         if (splitInfo == (int)SplitCases.SplitHand || splitInfo == (int)SplitCases.Split2Hand || splitInfo == (int)SplitCases.Split2Split1 || splitInfo == (int)SplitCases.SplitMax)
                         {
                             Console.Write("\tFirst hand: ");
-                            PrintCards(player.getHand());
+                            PrintCards(player.m_Hand);
                             Console.Write("\tSECOND hand: ");
-                            PrintCards(player.getSplit1());
-                            if (player.getSplit2().Any())
+                            PrintCards(player.m_Split1);
+                            if (player.m_Split2.Any())
                             {
                                 Console.Write("\tThird hand: ");
-                                PrintCards(player.getSplit2());
+                                PrintCards(player.m_Split2);
                             }
-                            GetPlayerInput(ref player, dealer,ref deck, splitAces, (int)SplitCases.Split2Split1);
+                            GetPlayerInput(player, dealer, deck, splitAces, (int)SplitCases.Split2Split1);
                         }
 
                         if (splitInfo == (int)SplitCases.Split2Hand || splitInfo == (int)SplitCases.Split2Split1 || splitInfo == (int)SplitCases.SplitMax) // if we have split once but not twice
                         {
                             Console.Write("\tFirst hand: ");
-                            PrintCards(player.getHand());
+                            PrintCards(player.m_Hand);
                             Console.Write("\tSecond hand: ");
-                            PrintCards(player.getSplit1());
+                            PrintCards(player.m_Split1);
                             Console.Write("\tTHIRD hand: ");
-                            PrintCards(player.getSplit2());
+                            PrintCards(player.m_Split2);
                             
-                            GetPlayerInput(ref player, dealer, ref deck, splitAces, (int)SplitCases.SplitMax);
+                            GetPlayerInput(player, dealer, deck, splitAces, (int)SplitCases.SplitMax);
                         }
 
                         DetermineSplits(player, dealer, ref deck);
@@ -398,68 +423,68 @@ namespace Blackjack
 
         private static int DetermineSplits(Player player, Dealer dealer,ref Deck deck)
         {
-            dealer.AI(ref deck);
+            dealer.AI(deck);
 
             int firstOutcome;
-            if (CheckBust(player.getHand()))
+            if (CheckBust(player.m_Hand))
             {
                 firstOutcome = (int)Outcomes.DEALER_WINS;
             }
             else
             {
-                if (GetHandValue(player.getHand()) < GetHandValue(dealer.getHand()))
+                if (GetHandValue(player.m_Hand) < GetHandValue(dealer.m_Hand))
                     firstOutcome = (int)Outcomes.DEALER_WINS;
-                else if (GetHandValue(player.getHand()) > GetHandValue(dealer.getHand()))
+                else if (GetHandValue(player.m_Hand) > GetHandValue(dealer.m_Hand))
                     firstOutcome = (int)Outcomes.PLAYER_WINS;
                 else firstOutcome = (int)Outcomes.PUSH;
             }
 
             int secondOutcome;
-            if (CheckBust(player.getSplit1()))
+            if (CheckBust(player.m_Split1))
             {
                 secondOutcome = (int)Outcomes.DEALER_WINS;
             }
             else
             {
-                if (GetHandValue(player.getSplit1()) < GetHandValue(dealer.getHand()))
+                if (GetHandValue(player.m_Split1) < GetHandValue(dealer.m_Hand))
                     secondOutcome = (int)Outcomes.DEALER_WINS;
-                else if (GetHandValue(player.getSplit1()) > GetHandValue(dealer.getHand()))
+                else if (GetHandValue(player.m_Split1) > GetHandValue(dealer.m_Hand))
                     secondOutcome = (int)Outcomes.PLAYER_WINS;
                 else secondOutcome = (int)Outcomes.PUSH;
             }
 
             int thirdOutcome = (int)Outcomes.SPLIT_DECIDED;
-            if (player.getSplit2().Any())
+            if (player.m_Split2.Any())
             {
-                if (CheckBust(player.getSplit2()))
+                if (CheckBust(player.m_Split2))
                 {
                     thirdOutcome = (int)Outcomes.DEALER_WINS;
                 }
                 else
                 {
-                    if (GetHandValue(player.getSplit2()) < GetHandValue(dealer.getHand()))
+                    if (GetHandValue(player.m_Split2) < GetHandValue(dealer.m_Hand))
                         thirdOutcome = (int)Outcomes.DEALER_WINS;
-                    else if (GetHandValue(player.getSplit2()) > GetHandValue(dealer.getHand()))
+                    else if (GetHandValue(player.m_Split2) > GetHandValue(dealer.m_Hand))
                         thirdOutcome = (int)Outcomes.PLAYER_WINS;
                     else thirdOutcome = (int)Outcomes.PUSH;
                 }
             }
 
-            if (CheckBust(dealer.getHand()))
+            if (CheckBust(dealer.m_Hand))
             {
                 // if dealer busted and player not already busted.
-                if (!CheckBust(player.getHand()))
+                if (!CheckBust(player.m_Hand))
                     firstOutcome = (int)Outcomes.PLAYER_WINS;
-                if (!CheckBust(player.getSplit1()))
+                if (!CheckBust(player.m_Split1))
                     secondOutcome = (int)Outcomes.PLAYER_WINS;
-                if (player.getSplit2().Any())
-                    if (CheckBust(player.getSplit2()))
+                if (player.m_Split2.Any())
+                    if (CheckBust(player.m_Split2))
                         thirdOutcome = (int)Outcomes.PLAYER_WINS;
             }
 
             HandleOutcomes(player, dealer, firstOutcome);
             HandleOutcomes(player, dealer, secondOutcome, 1);
-            if (player.getSplit2().Any())
+            if (player.m_Split2.Any())
                 HandleOutcomes(player, dealer, thirdOutcome, 2);
 
             return (int)Outcomes.SPLIT_DECIDED;
@@ -474,19 +499,19 @@ namespace Blackjack
                     Console.Write("\nPlayer wins");
                     if (betsOn && split == 0)
                     {
-                        Console.Write($" ${player.getBet()}!");
-                        player.setBankRoll(player.getBankRoll() + player.getBet());
+                        Console.Write($" ${player.m_Bet}!");
+                        player.m_BankRoll += player.m_Bet;
                     }
                     if (betsOn && split == 1)
                     {
-                        Console.Write($" ${player.getSplit1Bet()} on split 1!");
-                        player.setBankRoll(player.getBankRoll() + player.getSplit1Bet());
+                        Console.Write($" ${player.m_Split1Bet} on split 1!");
+                        player.m_BankRoll += player.m_Split1Bet;
 
                     }
                     if (betsOn && split == 2)
                     {
-                        Console.Write($" ${player.getSplit2Bet()} on split 2!");
-                        player.setBankRoll(player.getBankRoll() + player.getSplit2Bet());
+                        Console.Write($" ${player.m_Split2Bet} on split 2!");
+                        player.m_BankRoll += player.m_Split2Bet;
                     }
                     break;
                 case (int)Outcomes.DEALER_WINS:
@@ -494,19 +519,19 @@ namespace Blackjack
                     Console.Write("\nDealer wins.");
                     if (betsOn && split == 0)
                     {
-                        Console.Write($" Player loses ${player.getBet()}!");
-                        player.setBankRoll(player.getBankRoll() - player.getBet());
+                        Console.Write($" Player loses ${player.m_Bet}!");
+                        player.m_BankRoll -= player.m_Bet;
                     }
                     if (betsOn && split == 1)
                     {
-                        Console.Write($" Player loses ${player.getSplit1Bet()} on split 1!");
-                        player.setBankRoll(player.getBankRoll() - player.getSplit1Bet());
+                        Console.Write($" Player loses ${player.m_Split1Bet} on split 1!");
+                        player.m_BankRoll -= player.m_Split1Bet;
 
                     }
                     if (betsOn && split == 2)
                     {
-                        Console.Write($" Player loses ${player.getSplit2Bet()} on split 2!");
-                        player.setBankRoll(player.getBankRoll() - player.getSplit2Bet());
+                        Console.Write($" Player loses ${player.m_Split2Bet} on split 2!");
+                        player.m_BankRoll -= player.m_Split2Bet;
                     }
                     break;
                 case (int)Outcomes.PUSH:
@@ -514,15 +539,15 @@ namespace Blackjack
                     Console.Write("Draw!");
                     if (betsOn && split == 0)
                     {
-                        Console.Write($" Returned ${player.getBet()}.\n");
+                        Console.Write($" Returned ${player.m_Bet}.\n");
                     }
                     if (betsOn && split == 1)
                     {
-                        Console.Write($" Returned  ${player.getSplit1Bet()} on split 1!");
+                        Console.Write($" Returned  ${player.m_Split1Bet} on split 1!");
                     }
                     if (betsOn && split == 2)
                     {
-                        Console.Write($" Returned ${player.getSplit2Bet()} on split 2!");
+                        Console.Write($" Returned ${player.m_Split2Bet} on split 2!");
                     }
                     break;
 
@@ -532,8 +557,8 @@ namespace Blackjack
                     Console.Write("\n\tBlackjack for the player!\n");
                     if (betsOn)
                     {
-                        Console.Write($" They win ${(int)(player.getBet() * 1.5f)}!\n");
-                        player.setBankRoll(player.getBankRoll() + (int)(player.getBet() * 1.5f));
+                        Console.Write($" They win ${(int)(player.m_Bet * 1.5f)}!\n");
+                        player.m_BankRoll += (int)(player.m_Bet * 1.5f);
                     }
                     break;
                 case (int)Outcomes.DEALER_Blackjack:
@@ -542,11 +567,10 @@ namespace Blackjack
                     Console.Write("\n\tBlackjack for the dealer!\n");
                     if (betsOn)
                     {
-                        Console.Write($" They lose ${player.getBet()}!\n");
-                        player.setBankRoll(player.getBankRoll() - (int)(player.getBet()));
+                        Console.Write($" They lose ${player.m_Bet}!\n");
+                        player.m_BankRoll -= (int)(player.m_Bet);
                     }
                     break;
-
                 case (int)Outcomes.SPLIT_DECIDED:
                     break;
                     

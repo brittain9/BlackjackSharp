@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
@@ -21,18 +22,13 @@ namespace Blackjack
 
     class Deck
     {
-        private deck_t deck;
-
-
-        public deck_t getDeck()
-        {
-            return deck;
-        }
+        private deck_t _m_deck;
+        public deck_t deck { get{ return _m_deck; } }
 
         public
             Deck(int numDecks, bool shuffled)
         {
-            deck = new deck_t(_MakeDeck(numDecks, shuffled));
+            _m_deck = new deck_t(_MakeDeck(numDecks, shuffled));
         }
 
         private static deck_t _MakeDeck(int numDecks, bool shuffled)
@@ -97,19 +93,16 @@ namespace Blackjack
             if (!deck.Any())
             {
                 Console.WriteLine("All cards have been used. Reshuffling.");
-                deck = _MakeDeck(6, true);
+                _m_deck = _MakeDeck(6, true);
                 Console.WriteLine("Created new deck.");
             }
             Card returnCard = deck[0];
             deck.Remove(deck[0]);
             return returnCard;
         }
-
-        // Making static so I can use with my other deck_t
-
     }
 
-    class Card
+    struct Card
     {
         public int RankValue()
         {
@@ -228,21 +221,14 @@ namespace Blackjack
         };
 
         private rank_t rank;
+        public rank_t Rank { get { return rank; } } // cool getter methods compared to C++
         private suit_t suit;
+        public suit_t Suit { get { return suit; } }
 
         public Card(rank_t r, suit_t s)
         {
             rank = r;
             suit = s;
-        }
-
-        public rank_t getRank()
-        {
-            return this.rank;
-        }
-        public suit_t getSuit()
-        {
-            return this.suit;
         }
     }
 }
