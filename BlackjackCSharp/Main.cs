@@ -11,18 +11,22 @@ namespace Blackjack
         {
             
 
-            Deck deck = new Deck(6, true);
+            Deck deck = new Deck(1, true);
             Player player = new Player();
             Dealer dealer = new Dealer();
+
+            for (var i = 0; i < 10000; i++)
+            {
+                deck.DrawCard();
+            }
+
+            Console.WriteLine(deck);
 
             // Game loop
             while (!Blackjack.END_GAME && player.m_BankRoll > 0)
             {
                 int outcome = Blackjack.PlayBlackjack(player, dealer, deck);
                 Blackjack.HandleOutcomes(player, dealer, outcome);
-
-                Console.WriteLine("\n\n");
-                Blackjack.PrintCards(deck.deck);
 
                 if (player.m_BankRoll <= 0)
                     Console.WriteLine("you're broke");

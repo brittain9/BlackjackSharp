@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -7,16 +8,14 @@ using System.Threading.Tasks;
 
 namespace Blackjack
 {
-    using deck_t = System.Collections.Generic.List<Card>;
-
     class Player
     {
-        private deck_t _m_Hand;
-        public deck_t m_Hand { get{ return _m_Hand; }}
-        private deck_t _m_Split1;
-        public deck_t m_Split1 { get{ return _m_Split1; } }
-        private deck_t _m_Split2;
-        public deck_t m_Split2 { get{ return _m_Split2; }  }
+        private Hand _m_Hand;
+        public Hand m_Hand { get{ return new Hand(_m_Hand.m_hand); } }
+        private Hand _m_Split1;
+        public Hand m_Split1 {get { return new Hand(_m_Split1.m_hand); } }
+        private Hand _m_Split2;
+        public Hand m_Split2 { get{ return new Hand(_m_Split2.m_hand); } }
 
         private int _m_BankRoll = 1000;
         public int m_BankRoll
@@ -63,48 +62,58 @@ namespace Blackjack
 
         public Player()
         {
-            _m_Hand = new deck_t { };
-            _m_Split1 = new deck_t { };
-            _m_Split2 = new deck_t { };
+            _m_Hand = new Hand { };
+            _m_Split1 = new Hand { };
+            _m_Split2 = new Hand { };
         }
     }
 
     class Dealer
     {
-        private deck_t _m_Hand;
-        public deck_t m_Hand {get { return _m_Hand; } }
+        private Hand _m_Hand;
+
+        public Hand m_Hand
+        {
+            get
+            {
+                return new Hand(_m_Hand.m_hand);
+            }
+        }
         private int _m_DealerStand = 17;
 
         public Dealer()
         {
-            _m_Hand = new deck_t { };
+            _m_Hand = new Hand();
         }
 
         public void PrintDealerUpCard()
         {
-            _m_Hand[0].PrintCard(); 
-            Console.Write(" ??");
+            Console.Write(_m_Hand.m_CardList[0] + " ??");
         }
-        public int DealerUpCardValue() { return _m_Hand[0].RankValue(); }
+        public int DealerUpCardValue() { return _m_Hand.m_CardList[0].RankValue(); }
 
         public bool AI(Deck deck)
         {
             // Return true if dealer busts, false if not.
-            Console.Write("Dealers Turn.\n\tDealer hand: ");
-            Blackjack.PrintCards(_m_Hand);
+            Console.Write("Dealers Turn.\n\tDealer hand: "); 
+            Console.Write(_m_Hand);
             while (true)
             {
-                if (Blackjack.CheckBust(_m_Hand))
-                    return true;
-                if (Blackjack.GetHandValue(_m_Hand) >= _m_DealerStand)
+                if (_m_Hand.CheckBust())
                 {
+                    Console.WriteLine($"\tDealer hand value : {_m_Hand.GetHandValue()}");
+                    return true;
+                }
+                
+                if (_m_Hand.GetHandValue() >= _m_DealerStand)
+                {
+                    Console.WriteLine($"\tDealer hand value : {_m_Hand.GetHandValue()}");
                     Console.WriteLine("Dealer stands.");
                     return false;
                 }
-                _m_Hand.Add(deck.DrawCard());
+                _m_Hand.m_CardList.Add(deck.DrawCard());
                 Console.Write("\tDealer hand: ");
-                Blackjack.PrintCards(_m_Hand);
-                Console.WriteLine($"\tDealer hand value : {Blackjack.GetHandValue(_m_Hand)}");
+                Console.Write(_m_Hand);
             }
         }
     }

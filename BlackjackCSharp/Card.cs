@@ -18,47 +18,95 @@ using Blackjack;
 
 namespace Blackjack
 {
-    using deck_t = System.Collections.Generic.List<Card>;
 
-    class Deck
+    public enum suit_t
     {
-        private deck_t _m_deck;
-        public deck_t deck { get{ return _m_deck; } }
+        hearts,
+        diamonds,
+        clubs,
+        spades
+    };
+
+    public enum rank_t
+    {
+        ace = 1,
+        two,
+        three,
+        four,
+        five,
+        six,
+        seven,
+        eight,
+        nine,
+        ten,
+        jack,
+        queen,
+        king
+    };
+
+    class CardList
+    {
+        protected List<Card> _m_CardList;
+
+        public List<Card> m_CardList
+        {
+            get { return _m_CardList; }
+            set { _m_CardList = value; }
+        }
+
+        public override string ToString()
+        {
+            string str = "";
+            foreach (var card in m_CardList)
+            {
+                str += card.ToString() + " ";
+            }
+            return str;
+        }
+    }
+
+    class Deck : CardList
+    {
+        public List<Card> m_Deck
+        {
+            get { return _m_CardList; }
+            set { _m_CardList = value; }
+        }
 
         public
             Deck(int numDecks, bool shuffled)
         {
-            _m_deck = new deck_t(_MakeDeck(numDecks, shuffled));
+            _m_CardList = new List<Card>(_MakeDeck(numDecks, shuffled));
         }
 
-        private static deck_t _MakeDeck(int numDecks, bool shuffled)
+        private static List<Card> _MakeDeck(int numDecks, bool shuffled)
         {
-            Card.rank_t[] allRanks =
+            rank_t[] allRanks =
             {
-                Card.rank_t.ace,
-                Card.rank_t.two,
-                Card.rank_t.three,
-                Card.rank_t.four,
-                Card.rank_t.five,
-                Card.rank_t.six,
-                Card.rank_t.seven,
-                Card.rank_t.eight,
-                Card.rank_t.nine,
-                Card.rank_t.ten,
-                Card.rank_t.jack,
-                Card.rank_t.queen,
-                Card.rank_t.king
+                rank_t.ace,
+                rank_t.two,
+                rank_t.three,
+                rank_t.four,
+                rank_t.five,
+                rank_t.six,
+                rank_t.seven,
+                rank_t.eight,
+                rank_t.nine,
+                rank_t.ten,
+                rank_t.jack,
+                rank_t.queen,
+                rank_t.king
             };
 
-            Card.suit_t[] allSuits =
+            suit_t[] allSuits =
             {
-                Card.suit_t.hearts,
-                Card.suit_t.diamonds,
-                Card.suit_t.clubs,
-                Card.suit_t.spades
+                suit_t.hearts,
+                suit_t.diamonds,
+                suit_t.clubs,
+                suit_t.spades
             };
 
-            deck_t deck = new deck_t();
+            List<Card> deck = new List<Card>();
 
             for (int i = 0; i < numDecks; i++)
             {
@@ -87,18 +135,75 @@ namespace Blackjack
             }
             return deck;
         }
-
         public Card DrawCard()
         {
-            if (!deck.Any())
+            if (!m_Deck.Any())
             {
                 Console.WriteLine("All cards have been used. Reshuffling.");
-                _m_deck = _MakeDeck(6, true);
+                m_Deck = _MakeDeck(6, true);
                 Console.WriteLine("Created new deck.");
             }
-            Card returnCard = deck[0];
-            deck.Remove(deck[0]);
+            Card returnCard = m_Deck[0];
+            m_Deck.Remove(m_Deck[0]);
             return returnCard;
+        }
+    }
+
+    class Hand : CardList
+    {
+        public List<Card> m_hand
+        {
+            get { return _m_CardList; }
+            set { _m_CardList = value; }
+        }
+
+        public Hand()
+        {
+            _m_CardList = new List<Card>() { };
+        }
+
+        public Hand(List<Card> hand)
+        {
+            _m_CardList = hand;
+        }
+
+        public int GetHandValue()
+        {
+            int value = 0;
+            bool hasAce = false;
+            foreach (var card in m_hand)
+            {
+                value += card.RankValue();
+                if (card.RankValue() == 1)
+                {
+                    // if has ace in hand
+                    hasAce = true;
+                }
+            }
+            if (hasAce && (value + 10) <= 21)
+                value += 10;
+            return value;
+        }
+
+        public bool CheckBust()
+        {
+            return GetHandValue() > 21;
+        }
+
+        public bool CheckBlackjack()
+        {
+            return (m_hand[0].RankValue() == 1 || m_hand[1].RankValue() == 1) && !(m_hand[0].RankValue() == 1 && m_hand[1].RankValue() == 1)
+                                                                              && (m_hand[0].RankValue() == 10 || m_hand[1].RankValue() == 10); // If 1 card is an ace and the other is 10 value
+        }
+
+        public bool isSplittable(bool byValue)
+        {
+            if (byValue)
+                if (m_hand[0].RankValue() == m_hand[1].RankValue())
+                    return true;
+            if (m_hand[0].RankNumber() == m_hand[1].RankNumber())
+                return true;
+            return false;
         }
     }
 
@@ -168,60 +273,37 @@ namespace Blackjack
             return 0;
         }
 
-        public void PrintCard()
+        public override string ToString()
         {
+            string card = "";
             switch (rank)
             {
-                case Card.rank_t.ace: Console.Write('A'); break;
-                case Card.rank_t.two: Console.Write('2'); break;
-                case Card.rank_t.three: Console.Write('3'); break;
-                case Card.rank_t.four: Console.Write('4'); break;
-                case Card.rank_t.five: Console.Write('5'); break;
-                case Card.rank_t.six: Console.Write('6'); break;
-                case Card.rank_t.seven: Console.Write('7'); break;
-                case Card.rank_t.eight: Console.Write('8'); break;
-                case Card.rank_t.nine: Console.Write('9'); break;
-                case Card.rank_t.ten: Console.Write("10"); break;
-                case Card.rank_t.jack: Console.Write('J'); break;
-                case Card.rank_t.queen: Console.Write('Q'); break;
-                case Card.rank_t.king: Console.Write('K'); break;
+                case rank_t.ace: card += 'A'; break;
+                case rank_t.two: card += '2'; break;
+                case rank_t.three: card += '3'; break;
+                case rank_t.four: card += '4'; break;
+                case rank_t.five: card += '5'; break;
+                case rank_t.six: card += '6'; break;
+                case rank_t.seven: card += '7'; break;
+                case rank_t.eight: card += '8'; break;
+                case rank_t.nine: card += '9'; break;
+                case rank_t.ten: card += "10"; break;
+                case rank_t.jack: card += 'J'; break;
+                case rank_t.queen: card += 'Q'; break;
+                case rank_t.king: card += 'K'; break;
             }
             switch (suit)
             {
-                case Card.suit_t.clubs: Console.Write('C'); break;
-                case Card.suit_t.diamonds: Console.Write('D'); break;
-                case Card.suit_t.hearts: Console.Write('H'); break;
-                case Card.suit_t.spades: Console.Write('S'); break;
+                case suit_t.clubs: card += 'C'; break;
+                case suit_t.diamonds: card += 'D'; break;
+                case suit_t.hearts: card += 'H'; break;
+                case suit_t.spades: card += 'S'; break;
             }
+            return card;
         }
 
-        public enum suit_t
-        {
-            hearts,
-            diamonds,
-            clubs,
-            spades
-        };
-
-        public enum rank_t
-        {
-            ace = 1,
-            two,
-            three,
-            four,
-            five,
-            six,
-            seven,
-            eight,
-            nine,
-            ten,
-            jack,
-            queen,
-            king
-        };
-
         private rank_t rank;
-        public rank_t Rank { get { return rank; } } // cool getter methods compared to C++
+        public rank_t Rank { get { return rank; } }
         private suit_t suit;
         public suit_t Suit { get { return suit; } }
 
